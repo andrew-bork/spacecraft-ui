@@ -101,11 +101,11 @@ function OrientationIndicator() {
     //     // velocity.multiplyScalar(0.02);
     //     return [
     //         new Vector3(),
-    //         new Vector3(0, 0.01, 0),
+    //         new Vector3(0.01, 0.00, 0),
     //     ];
     // }, []);
-    // console.log(points);
-    // console.log(offset);
+    // // console.log(points);
+    // // console.log(offset);
     // return <Line
     //     quaternion={orientation}
     //     // scale={[f, f, f]}
@@ -126,7 +126,7 @@ function OrientationIndicator() {
 
 
 
-
+const SCALE = 0.01;
 export default function MainView3D({  }) {
 
     const data = useRocketData();
@@ -137,7 +137,7 @@ export default function MainView3D({  }) {
         // for(let i = 0; i <= 1.0; i +=0.01) {
         //     out.push(parametricFunction(i));
         // }
-        return data.map((d) => new Vector3(d.position.x, d.position.y, d.position.z));
+        return data.map((d) => new Vector3(d.position.x * SCALE, d.position.y * SCALE, d.position.z * SCALE));
     }, [data]);
 
     // let [ f, setF ] = useState(1.0);
@@ -150,13 +150,16 @@ export default function MainView3D({  }) {
         // console.log(data);
         if(!current) return new Vector3();
         // console.log(d);
-        return new Vector3(-current.position.x, -current.position.y, -current.position.z);
+        return new Vector3(-current.position.x * SCALE, -current.position.y * SCALE, -current.position.z * SCALE);
     }, [current]);
 
     
 
     return <Canvas
         linear
+        gl={{
+            logarithmicDepthBuffer: true
+        }}
         camera={{fov: 75, near: 0.001, far: 1000, position: [0, 0, 2]}}
         // onWheel={(e) => {
         //     setZoom((z) => z + e.deltaY);

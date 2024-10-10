@@ -21,3 +21,12 @@
     left: 65%;
     transform: translate(-100%, 0);
 }
+
+.vertical-speed {
+    position:absolute;
+    top: 24px;
+    left: 65%;
+    transform: translate(-100%, 0);
+    width: max-content;
+
+}

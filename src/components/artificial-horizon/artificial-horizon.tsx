@@ -75,7 +75,7 @@ export default function ArtificialHorizon() {
     // }
     
     return (
-        <AbsoluteUIComponent aspect={1} width={300} x={0.5} y={0.7}>
+        <AbsoluteUIComponent aspect={1} width={200} x={0.5} y={0.7}>
             <svg style={{width: "100%", height: "100%"}} viewBox="20 20 40 40" xmlns="http://www.w3.org/2000/svg" strokeLinecap="round" strokeLinejoin="round" stroke="black" width="128px">
             
             {/* Pitch Indicator Clipping */}

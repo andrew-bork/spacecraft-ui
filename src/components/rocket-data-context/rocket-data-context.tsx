@@ -2,6 +2,7 @@
 
 import { createContext, Dispatch, ReactNode, SetStateAction, useContext, useState } from "react";
 import { Quaternion, Vector3 } from "three";
+import { velocity } from "three/webgpu";
 
 export interface Vec3 {
     x: number, y: number, z: number
@@ -18,6 +19,8 @@ export interface RocketData {
     orientation: Quart;
 
     localAngularRates: Vec3;
+
+    verticalSpeed: number;
     // worldAngularRates: Vec3;
 
     utc: number;
@@ -64,17 +67,33 @@ function parametricFunctionA(t:number) {
 
 function generateTestData() {
     const out = [];
-    const up = new Vector3(0, 1, 0);
+    const fwd = new Vector3(1, 0, 0);
     for(let i = 0; i <= 1.0; i +=0.001) {
         const orientation = new Quaternion();
+        const p = parametricFunction(i);
         const a = parametricFunctionA(i);
+        const v = parametricFunctionV(i);
+        
+        p.x *= 1000;
+        p.y *= 1000;
+        p.z *= 1000;
+
+        a.x /= 1000;
+        a.y /= 1000;
+        a.z /= 1000;
         const b = new Vector3(-a.x, -a.y, -a.z).clone().normalize();
-        orientation.setFromUnitVectors(up, b);
+        orientation.setFromUnitVectors(fwd, b);
         out.push({
-            position: parametricFunction(i),
-            velocity: parametricFunctionV(i),
+            position: p,
+            velocity: v,
             acceleration: a,
-            orientation
+            orientation,
+            
+            localAngularRates: { x: NaN, y: NaN, z: NaN },
+
+            verticalSpeed: v.y,
+
+            utc: i * 100
         });
     }
     return out;
@@ -100,7 +119,7 @@ export function useCurrentData() {
     return data[current];
 }
 
-export function useCurrentIndex() : [ number, Dispatch<number> ]{
+export function useCurrentIndex() : [ number, Dispatch<SetStateAction<number>> ]{
     const { current, setCurrent } = useContext(RocketDataContext);
     return [ current, setCurrent ];
 }
@@ -110,7 +129,7 @@ export function RocketDataContextProvider({ children } : { children : ReactNode 
     const [ data, setData ] = useState(generateTestData() as unknown as RocketData[]);
     const [ current, setCurrent ] = useState(data.length-1);
 
-
+    
 
     return <RocketDataContext.Provider value={{
         data,

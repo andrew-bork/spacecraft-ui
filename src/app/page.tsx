@@ -8,6 +8,7 @@ import { RocketDataContextProvider, useRocketData } from "@/components/rocket-da
 import { TimelineSelector } from "@/components/timeline-selector/timeline-selector";
 import { AltitudeIndicator } from "@/components/attitude-indicator/altitude-indicator";
 import ArtificialHorizon from "@/components/artificial-horizon/artificial-horizon";
+import { AttitudeReadout } from "@/components/attitude-readout/attitude-readout";
 // import { TimelineSlider } from "@/components/timeline-slider/TimelineSlider";
 
 function parametricFunction(t:number) {
@@ -39,7 +40,8 @@ export default function Trajectory() {
 
             <TimelineSelector/>
             <AltitudeIndicator/>
-            <ArtificialHorizon/>
+            <AttitudeReadout/>
+            {/* <ArtificialHorizon/> */}
         </main>
     </RocketDataContextProvider>
 }
