@@ -31,6 +31,7 @@ export interface RocketData {
 const RocketDataContext = createContext({
     data: [] as RocketData[],
     setData: (() => {}) as Dispatch<SetStateAction<RocketData[]>>,
+    clearData: () => {},
 
     current: 0,
     setCurrent: (() => {}) as Dispatch<SetStateAction<number>>
@@ -107,9 +108,10 @@ export function useRocketData() {
 }
 
 export function useAddRocketData() {
-    const { setData } = useContext(RocketDataContext);
+    const { setData, current, data, setCurrent } = useContext(RocketDataContext);
     return (newData: RocketData) => {
         setData((old) => old.concat([newData]));
+        if(current >= data.length-1) setCurrent((i) => i+1);
     };
 }
 
@@ -124,18 +126,28 @@ export function useCurrentIndex() : [ number, Dispatch<SetStateAction<number>> ]
     return [ current, setCurrent ];
 }
 
+export function useRocketDataClear() {
+    const { clearData } = useContext(RocketDataContext);
+    return clearData;
+}
+
 export function RocketDataContextProvider({ children } : { children : ReactNode }) {
 
     const [ data, setData ] = useState(generateTestData() as unknown as RocketData[]);
+    // const [ data, setData ] = useState([] as RocketData[]);
     const [ current, setCurrent ] = useState(data.length-1);
 
-    
+    const clearData = () => {
+        setData([]);
+        setCurrent(-1);
+    }
 
     return <RocketDataContext.Provider value={{
         data,
         setData,
         current,
-        setCurrent
+        setCurrent,
+        clearData,
     }}>
         {children}
     </RocketDataContext.Provider>

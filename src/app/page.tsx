@@ -9,6 +9,9 @@ import { TimelineSelector } from "@/components/timeline-selector/timeline-select
 import { AltitudeIndicator } from "@/components/attitude-indicator/altitude-indicator";
 import ArtificialHorizon from "@/components/artificial-horizon/artificial-horizon";
 import { AttitudeReadout } from "@/components/attitude-readout/attitude-readout";
+import { SerialMonitor } from "@/components/serial-monitor/serial-monitor";
+import { SerialContextProvider } from "@/components/serial-context/serial-context";
+import { RocketDataManager } from "@/components/rocket-data-manager/rocket-data-manager";
 // import { TimelineSlider } from "@/components/timeline-slider/TimelineSlider";
 
 function parametricFunction(t:number) {
@@ -32,16 +35,21 @@ export default function Trajectory() {
 
 
     return <RocketDataContextProvider>
-        <main className={styles.main}>
-            <MainView3D
-                // current={Math.floor(current)}
-                />
+        <SerialContextProvider>
+
+            <main className={styles.main}>
+                <MainView3D
+                    // current={Math.floor(current)}
+                    />
 
 
-            <TimelineSelector/>
-            <AltitudeIndicator/>
-            <AttitudeReadout/>
-            {/* <ArtificialHorizon/> */}
-        </main>
+                <RocketDataManager/>
+                <TimelineSelector/>
+                <AltitudeIndicator/>
+                <AttitudeReadout/>
+                <SerialMonitor/>
+                {/* <ArtificialHorizon/> */}
+            </main>
+        </SerialContextProvider>
     </RocketDataContextProvider>
 }

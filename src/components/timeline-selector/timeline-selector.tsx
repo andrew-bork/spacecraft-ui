@@ -1,4 +1,5 @@
 import { AbsoluteUIComponent } from "../absolute-ui-component/AbsoluteUIComponent";
+import { HoldableButton } from "../helpers/holdable-button/holdable-button";
 import { useCurrentIndex, useRocketData } from "../rocket-data-context/rocket-data-context";
 import styles from "./timeline-selector.module.css"
 
@@ -56,21 +57,38 @@ export function TimelineSelector() {
             {/* <input type="range" value={current} onChange={(e) => {
                 setCurrent(Math.min(Math.max(Math.floor(parseInt(e.target.value)), 0), 99));
             }}/> */}
-            <span
-                onMouseDown={() => {
-                    setCurrent((c) => Math.max(c-1, 0));
+            
+            <HoldableButton
+                style={{
+                    display: `inline`
+                }}
+                onClick={() => {
+                    setCurrent((c) => c-1);
                 }}
             >
                 <FrameReverseIcon/>
-            </span>
+                </HoldableButton>
             <PauseIcon/>
-            <span
-                onMouseDown={() => {
-                    setCurrent((c) => Math.min(data.length - 1, c+1));
+            <HoldableButton
+                style={{
+                    display: `inline`
+                }}
+                onClick={() => {
+                    setCurrent((c) => c+1);
                 }}
             >
                 <FrameAdvanceIcon/>
-            </span>
+            </HoldableButton>
+            <HoldableButton
+                style={{
+                    display: `inline`
+                }}
+                onClick={() => {
+                    setCurrent((c) => c+10);
+                }}
+            >
+                <FrameAdvanceIcon/>
+            </HoldableButton>
         </div>
 
     </AbsoluteUIComponent>

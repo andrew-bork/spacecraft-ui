@@ -168,8 +168,8 @@ export default function MainView3D({  }) {
         <OrbitControls makeDefault />
         <Environment files="/res/hdr/HDR_subdued_blue_nebulae.hdr" background={true}/>
         <>
-    
-            <group position={curr}>
+            {
+                points.length > 1 ? <group position={curr}>
                 {/* <HeightMarkers f={f} curr={curr}/> */}
                 {/* <Box/> */}
                 <Line          
@@ -178,7 +178,9 @@ export default function MainView3D({  }) {
                     color={"#23aaff"}
                     lineWidth={3}  
                     />
-            </group>
+            </group> : <></>
+
+            }
         </>
         <VelocityIndicator/>
         <AccelerationIndicator/>
