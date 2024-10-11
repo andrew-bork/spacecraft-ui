@@ -35,7 +35,7 @@ export function RocketDataManager() {
     // const data = useRocketData();
     // const [ current, setCurrent ] = useCurrentIndex();
 
-    return <AbsoluteUIComponent x={0.8} y={0.5}>
+    return <AbsoluteUIComponent x={0.8} y={0.3}>
         <div 
         className={styles.main}
         style={{

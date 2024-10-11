@@ -35,22 +35,3 @@
 .spacer {
     height: 5px;
 }
-
-
-.main button {
-    border: #3265e688 1px solid;
-    padding: 5px;
-    background: #3265e611;
-    font-family: "Roboto Mono", monospace;
-    transition: background .3s;
-
-}
-.main button:hover {
-    background: #3265e622;
-
-}
-
-.main button:active {
-    background: #3265e633;
-
-}

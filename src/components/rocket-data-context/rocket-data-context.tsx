@@ -23,7 +23,7 @@ export interface RocketData {
     verticalSpeed: number;
     // worldAngularRates: Vec3;
 
-    utc: number;
+    time: number;
 };
 
 
@@ -34,7 +34,10 @@ const RocketDataContext = createContext({
     clearData: () => {},
 
     current: 0,
-    setCurrent: (() => {}) as Dispatch<SetStateAction<number>>
+    setCurrent: (() => {}) as Dispatch<SetStateAction<number>>,
+
+    realtime: false,
+    setRealtime: (() => {}) as Dispatch<SetStateAction<boolean>>,
 });
 
 
@@ -111,19 +114,48 @@ export function useAddRocketData() {
     const { setData, current, data, setCurrent } = useContext(RocketDataContext);
     return (newData: RocketData) => {
         setData((old) => old.concat([newData]));
-        if(current >= data.length-1) setCurrent((i) => i+1);
+        // if(current >= data.length-1) setCurrent((i) => i+1);
     };
 }
 
 export function useCurrentData() {
-    const { data, current } = useContext(RocketDataContext);
-    if(current < 0 || data.length <= current) return null;
+    const { data, current, realtime } = useContext(RocketDataContext);
+    // if(current < 0) return 
+    if(data.length == 0) return null;
+    if(realtime) return data[data.length-1];
+    // if(current < 0 || data.length <= current) return null;
     return data[current];
 }
 
-export function useCurrentIndex() : [ number, Dispatch<SetStateAction<number>> ]{
-    const { current, setCurrent } = useContext(RocketDataContext);
-    return [ current, setCurrent ];
+export function useCurrentIndex(){
+    const { current, realtime, data } = useContext(RocketDataContext);
+    if(realtime) return data.length - 1;
+    return current;
+}
+
+export function useChangeCurrentIndex() {
+    const { current, setCurrent, realtime, data, setRealtime } = useContext(RocketDataContext);
+    return (changeAmount : number ) => {
+        if(realtime) {
+            if(changeAmount < 0) {
+                setCurrent(data.length-1 + changeAmount);
+                setRealtime(false);
+            }
+        }else {
+            const newAmount = current + changeAmount;
+            if(data.length-1 <= newAmount) {
+                setRealtime(true);
+            }else{
+                setCurrent(Math.max(newAmount, 0));
+            }
+        }
+    }
+}
+
+export function useRealtime() : [ boolean, Dispatch<SetStateAction<boolean>> ]{
+    const { realtime, setRealtime } = useContext(RocketDataContext);
+
+    return [ realtime, setRealtime ]
 }
 
 export function useRocketDataClear() {
@@ -136,10 +168,12 @@ export function RocketDataContextProvider({ children } : { children : ReactNode 
     const [ data, setData ] = useState(generateTestData() as unknown as RocketData[]);
     // const [ data, setData ] = useState([] as RocketData[]);
     const [ current, setCurrent ] = useState(data.length-1);
+    const [ realtime, setRealtime ] = useState(true);
 
     const clearData = () => {
         setData([]);
-        setCurrent(-1);
+        setCurrent(0);
+        setRealtime(true);
     }
 
     return <RocketDataContext.Provider value={{
@@ -148,6 +182,8 @@ export function RocketDataContextProvider({ children } : { children : ReactNode 
         current,
         setCurrent,
         clearData,
+        realtime,
+        setRealtime
     }}>
         {children}
     </RocketDataContext.Provider>

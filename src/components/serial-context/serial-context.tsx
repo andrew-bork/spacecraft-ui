@@ -2,9 +2,13 @@ import { createContext, Dispatch, ReactNode, SetStateAction, useContext, useEffe
 import { useAddRocketData } from "../rocket-data-context/rocket-data-context";
 
 
+export interface LogEntry {
+    msg: string
+}
+
 export const SerialContext = createContext/* <GamepadContextData> */({
 
-    baudrate: 38400, 
+    baudrate: 115200, 
     setBaudrate: ((()=>{}) as Dispatch<SetStateAction<number>>),
 
     reset() {},
@@ -15,7 +19,8 @@ export const SerialContext = createContext/* <GamepadContextData> */({
     disconnect() {},
 
     clear() {},
-    rawSerial: [] as Uint8Array[],
+    frames: [] as Uint8Array[],
+    logs: [] as LogEntry[],
 });
 
 export function useSerial() {
@@ -28,7 +33,7 @@ class FrameParser {
     START_OF_FRAME=0x01;
     END_OF_FRAME=0x04;
     ESCAPE=0x27;
-    state: "WAIT_START_OF_FRAME"|"PARSING_MESSAGE"|"AFTER_ESCAPE";
+    state: 0|1|2;
     buffer: number[];
     maxFrameSize: number;
     constructor() {
@@ -36,38 +41,42 @@ class FrameParser {
         this.END_OF_FRAME=0x04; // End of transmission
         this.ESCAPE=0x27;
         
-        this.state = "WAIT_START_OF_FRAME";
+        this.state = 0;
         this.buffer = [];
-        this.maxFrameSize = 32;
+        this.maxFrameSize = 64;
     }
 
     parseByte(byte:number) {
         switch(this.state) {
-            case "WAIT_START_OF_FRAME":
+            case 0:
+                // console.log(byte, "WAIT_START_OF_FRAME");
+
                 if(byte == this.START_OF_FRAME) {
-                    this.state = "PARSING_MESSAGE";
+                    this.state = 1;
                     // i = 0;
                     this.buffer = []
                 }
                 return false;
-            case "PARSING_MESSAGE":
+            case 1:
+                // console.log(byte, "PARSING_MESSAGE");
                 if(byte == this.ESCAPE) {
-                    this.state = "AFTER_ESCAPE";
+                    this.state = 2;
                     return false;
                 }else if(byte == this.END_OF_FRAME) {
-                    this.state = "WAIT_START_OF_FRAME";
+                    this.state = 0;
                     return true;
                 }
-                if(this.buffer.length == this.maxFrameSize) {
-                    this.state = "WAIT_START_OF_FRAME";
+                if(this.buffer.length >= this.maxFrameSize) {
+                    this.state = 0;
                     return false;
                 }
                 this.buffer.push(byte);
                 return false;
-            case "AFTER_ESCAPE":
-                this.state = "PARSING_MESSAGE";
-                if(this.buffer.length == this.maxFrameSize) {
-                    this.state = "WAIT_START_OF_FRAME";
+            case 2:
+                // console.log(byte, "AFTER_ESCAPE");
+                this.state = 1;
+                if(this.buffer.length >= this.maxFrameSize) {
+                    this.state = 0;
                     return false;
                 }
                 this.buffer.push(byte);
@@ -86,10 +95,11 @@ export function SerialContextProvider({ children } : { children : ReactNode }) {
 
     // const [ data, setData ] = useState(generateTestData() as unknown as RocketData[]);
     // const [ current, setCurrent ] = useState(data.length-1);
-    const [ baudrate, setBaudrate ] = useState(115600);
+    const [ baudrate, setBaudrate ] = useState(115200);
     const [ connected, setConnected ] = useState(false);
 
-    const [ rawSerial, setRawSerial ] = useState([] as Uint8Array[]);
+    const [ frames, setFrames ] = useState([] as Uint8Array[]);
+    const [ logs, setLogs ] = useState([] as LogEntry[]);
 
     const port = useRef<any>(null!);
     const reader = useRef<any>(null!);
@@ -114,16 +124,28 @@ export function SerialContextProvider({ children } : { children : ReactNode }) {
                     // let decoded = await new TextDecoder().decode(value);
                     // console.log(value);
 
+                    // console.log(value)
                     for(let i = 0; i < value.length; i ++) {
+                        // console.log(parser)
                         if(parser.parseByte(value[i])) {
                             let frame = parser.getFrame();
-                            setRawSerial((old) => old.concat([frame]).slice(Math.max(old.length - 5, 0)));
+                            console.log(frame);
+                            setFrames((old) => old.concat([frame]).slice(Math.max(old.length - 5, 0)));
                             let view = new DataView(frame.buffer);
+                            // console.log(frame);
                             const getVector = (i:number) => {
                                 return {
                                     x: view.getFloat32(i, true),
                                     y: view.getFloat32(i+4, true),
                                     z: view.getFloat32(i+8, true),
+                                }
+                            }
+                            const getQuart = (i:number) => {
+                                return {
+                                    x: view.getFloat32(i, true),
+                                    y: view.getFloat32(i+4, true),
+                                    z: view.getFloat32(i+8, true),
+                                    w: view.getFloat32(i+12, true),
                                 }
                             }
                             const NaNVector = {
@@ -140,64 +162,17 @@ export function SerialContextProvider({ children } : { children : ReactNode }) {
                             // console.log(view.getFloat32(0, true), view.getFloat32(4, true), view.getFloat32(8, true), view.getFloat32(12, true));
                             // console.log(frame);
                             addRocketDataRef.current({
-                                position: getVector(4),
+                                position: identQuart,
                                 velocity: NaNVector,
                                 acceleration: NaNVector,
-                                utc: view.getFloat32(0, true),
-                                orientation: identQuart,
-                                localAngularRates: NaNVector,
+                                // utc: view.getFloat32(0, true),
+                                time: 0,
+                                orientation: getQuart(0),
+                                localAngularRates: getVector(16),
                                 verticalSpeed: NaN,
-                            })
+                            });
                         }
                     }
-
-                    // decoded = await decoded;
-                    // remain += decoded;
-                    // let commands = remain.split("\n");
-
-                    // if(commands.length >= 2) {
-                    //     try{
-                    //         const command = JSON.parse(commands[commands.length - 2]);
-                            
-                    //         const [ rotunda, shoulder, elbow, wristPitch, wristRoll, effectorPosition ] = command.angles;
-                    //         if(currentInputSourceRef.current === "mimic" && currentInputSystemRef.current === "directAngles") {
-                    //             setAngles({
-                    //                 rotunda: rotunda * DEG_TO_RAD,
-                    //                 shoulder: shoulder * DEG_TO_RAD,
-                    //                 elbow: elbow * DEG_TO_RAD,
-                    //                 wristPitch: wristPitch * DEG_TO_RAD,
-                    //                 wristRoll: wristRoll * DEG_TO_RAD,
-                    //                 effectorPosition: effectorPosition * DEG_TO_RAD,
-                    //             });
-                    //         }
-                    //         setMimicAngles({
-                    //             rotunda: rotunda,
-                    //             shoulder: shoulder,
-                    //             elbow: elbow,
-                    //             wristPitch: wristPitch,
-                    //             wristRoll: wristRoll,
-                    //             effectorPosition: effectorPosition,
-                    //         });
-                    //     }catch(e) {
-                    //         console.log("Recieved Malformed command", commands[commands.length - 2]);
-                    //     }
-
-                    //     remain = commands[commands.length - 1];
-
-                    // }
-
-                    
-
-
-                    // setRawSerial((rawSerial) => rawSerial + decoded);
-
-                    // setRawSerial((rawSerial) => {
-                    //     let newRawSerial = rawSerial + decoded;
-                    //     if(newRawSerial.length > 1000) {
-                    //         newRawSerial = newRawSerial.substring(newRawSerial.length - 1000);    
-                    //     }
-                    //     return newRawSerial;
-                    // });
                 }
             }) ();
 
@@ -250,7 +225,8 @@ export function SerialContextProvider({ children } : { children : ReactNode }) {
     };
 
     const clear = () => {
-        setRawSerial([]);
+        setFrames([]);
+        setLogs([]);
     };
     
     
@@ -260,7 +236,8 @@ export function SerialContextProvider({ children } : { children : ReactNode }) {
         connected,
         reset,
         clear,
-        rawSerial
+        frames,
+        logs
     }}>
         {children}
     </SerialContext.Provider>

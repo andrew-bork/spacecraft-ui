@@ -1,6 +1,6 @@
 import { AbsoluteUIComponent } from "../absolute-ui-component/AbsoluteUIComponent";
 import { HoldableButton } from "../helpers/holdable-button/holdable-button";
-import { useCurrentIndex, useRocketData } from "../rocket-data-context/rocket-data-context";
+import { useChangeCurrentIndex, useCurrentIndex, useRealtime, useRocketData } from "../rocket-data-context/rocket-data-context";
 import styles from "./timeline-selector.module.css"
 
 
@@ -32,7 +32,10 @@ function FrameReverseIcon() {
 export function TimelineSelector() {
 
     const data = useRocketData();
-    const [ current, setCurrent ] = useCurrentIndex();
+    // const [ current, setCurrent ] = useCurrentIndex();
+    const current = useCurrentIndex();
+    const changeCurrentIndex = useChangeCurrentIndex();
+    const [realtime, setRealtime ] = useRealtime();
 
     return <AbsoluteUIComponent>
         <div 
@@ -53,6 +56,13 @@ export function TimelineSelector() {
                     Frame 
                 </span>
                 {current}
+                <i
+                    style={{
+                        color: `#8f8f8f`,
+                        marginRight: `4px`,
+                        fontSize: `12px`
+                    }}
+                >{(realtime ? ` (Live)` : ``)}</i>
             </div>
             {/* <input type="range" value={current} onChange={(e) => {
                 setCurrent(Math.min(Math.max(Math.floor(parseInt(e.target.value)), 0), 99));
@@ -63,7 +73,8 @@ export function TimelineSelector() {
                     display: `inline`
                 }}
                 onClick={() => {
-                    setCurrent((c) => c-1);
+                    // setCurrent((c) => c-1);
+                    changeCurrentIndex(-1);
                 }}
             >
                 <FrameReverseIcon/>
@@ -74,7 +85,9 @@ export function TimelineSelector() {
                     display: `inline`
                 }}
                 onClick={() => {
-                    setCurrent((c) => c+1);
+                    // setCurrent((c) => c+1);
+                    changeCurrentIndex(1);
+
                 }}
             >
                 <FrameAdvanceIcon/>
@@ -84,11 +97,21 @@ export function TimelineSelector() {
                     display: `inline`
                 }}
                 onClick={() => {
-                    setCurrent((c) => c+10);
+                    // setCurrent((c) => c+10);
+                    changeCurrentIndex(10);
+
                 }}
             >
                 <FrameAdvanceIcon/>
             </HoldableButton>
+            <span
+                onClick={() => {
+                    setRealtime(true);
+                }}
+            >
+
+                <FrameAdvanceIcon/>
+            </span>
         </div>
 
     </AbsoluteUIComponent>

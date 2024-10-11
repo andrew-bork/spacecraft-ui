@@ -166,7 +166,7 @@ export default function MainView3D({  }) {
         // }}
         >
         <OrbitControls makeDefault />
-        <Environment files="/res/hdr/HDR_subdued_blue_nebulae.hdr" background={true}/>
+        <Environment files="/res/hdr/HDR_subdued_blue_nebulae_2k.hdr" background={true}/>
         <>
             {
                 points.length > 1 ? <group position={curr}>
