@@ -43,7 +43,7 @@ class FrameParser {
         
         this.state = 0;
         this.buffer = [];
-        this.maxFrameSize = 64;
+        this.maxFrameSize = 128;
     }
 
     parseByte(byte:number) {
@@ -129,23 +129,25 @@ export function SerialContextProvider({ children } : { children : ReactNode }) {
                         // console.log(parser)
                         if(parser.parseByte(value[i])) {
                             let frame = parser.getFrame();
-                            console.log(frame);
+                            // console.log(frame);
                             setFrames((old) => old.concat([frame]).slice(Math.max(old.length - 5, 0)));
                             let view = new DataView(frame.buffer);
                             // console.log(frame);
+
+                            const getFloat = (i:number) => view.getFloat32(i, true);
                             const getVector = (i:number) => {
                                 return {
-                                    x: view.getFloat32(i, true),
-                                    y: view.getFloat32(i+4, true),
-                                    z: view.getFloat32(i+8, true),
+                                    x: getFloat(i),
+                                    y: getFloat(i+4),
+                                    z: getFloat(i+8),
                                 }
                             }
                             const getQuart = (i:number) => {
                                 return {
-                                    x: view.getFloat32(i, true),
-                                    y: view.getFloat32(i+4, true),
-                                    z: view.getFloat32(i+8, true),
-                                    w: view.getFloat32(i+12, true),
+                                    x: getFloat(i),
+                                    y: getFloat(i+4),
+                                    z: getFloat(i+8),
+                                    w: getFloat(i+12),
                                 }
                             }
                             const NaNVector = {
@@ -159,18 +161,35 @@ export function SerialContextProvider({ children } : { children : ReactNode }) {
                                 z: 0,
                                 w: 1,
                             }
+
+
+                            const parseDataFrame = () => {
+
+                            }
+
                             // console.log(view.getFloat32(0, true), view.getFloat32(4, true), view.getFloat32(8, true), view.getFloat32(12, true));
-                            // console.log(frame);
-                            addRocketDataRef.current({
-                                position: identQuart,
-                                velocity: NaNVector,
-                                acceleration: NaNVector,
-                                // utc: view.getFloat32(0, true),
-                                time: 0,
-                                orientation: getQuart(0),
-                                localAngularRates: getVector(16),
-                                verticalSpeed: NaN,
-                            });
+                            if(frame[0] == 68) {
+                                // console.log(frame);
+                                if(frame.length < 81) continue;
+                                addRocketDataRef.current({
+                                    position: getVector(5),
+                                    velocity: getVector(17),
+                                    acceleration: getVector(29),
+                                    // localAngularRates
+                                    // utc: view.getFloat32(0, true),
+                                    time: getFloat(1),
+                                    orientation: getQuart(53),
+                                    localAngularRates: getVector(69),
+                                    verticalSpeed: NaN,
+                                });
+                            }else if(frame[0] == 76) {
+                                const d = new TextDecoder();
+                                const msg = d.decode(frame.slice(1));
+                                setLogs((old) => old.concat([{
+                                    msg
+                                }]).slice(Math.max(old.length - 1000, 0)));
+
+                            }
                         }
                     }
                 }

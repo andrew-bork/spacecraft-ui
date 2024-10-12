@@ -78,8 +78,8 @@ export function SerialMonitor() {
                 >{serial.connected ? `Disconnect` : `Connect`}</button>
             </div>
             <div className={styles.output}>
-                <FrameView/>
-                {/* <LogView/> */}
+                {/* <FrameView/> */}
+                <LogView/>
             </div>
             {/* $  */}
             <input className={styles["serial-input"]}/>
